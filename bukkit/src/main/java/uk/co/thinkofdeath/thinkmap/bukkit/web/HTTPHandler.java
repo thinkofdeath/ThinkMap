@@ -41,7 +41,6 @@ public class HTTPHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
     }
 
     private final ThinkMapPlugin plugin;
-    private final int id;
 
     @Override
     protected void channelRead0(ChannelHandlerContext context, FullHttpRequest msg) throws Exception {

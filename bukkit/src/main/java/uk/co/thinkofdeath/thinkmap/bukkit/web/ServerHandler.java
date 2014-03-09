@@ -17,15 +17,19 @@ public class ServerHandler extends ChannelInitializer<SocketChannel> {
     @Override
     protected void initChannel(SocketChannel socketChannel) throws Exception {
         int id = 0;
+
         while (plugin.activeConnections.containsKey(id)) {
-            id = plugin.lastConnectionId.getAndIncrement();
+            id++;
         }
+
         plugin.activeConnections.put(id, socketChannel);
+
         ChannelPipeline pipeline = socketChannel.pipeline();
+
         pipeline.addLast("codec-http", new HttpServerCodec());
         pipeline.addLast("aggregator", new HttpObjectAggregator(65536));
-        pipeline.addLast("handler", new HTTPHandler(plugin, id));
+        pipeline.addLast("handler", new HTTPHandler(plugin));
         pipeline.addLast("websocket", new WebSocketServerProtocolHandler("/server"));
-        pipeline.addLast("websocket-handler", new WebSocketHandler(plugin, id));
+        pipeline.addLast("websocket-handler", new WebSocketHandler(plugin));
     }
 }

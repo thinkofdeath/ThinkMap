@@ -188,12 +188,14 @@ public class ChunkManager implements Runnable {
     private void gzipChunk(ChunkSnapshot chunk, ByteBuf out) {
         int mask = 0;
         int count = 0;
+
         for (int i = 0; i < 16; i++) {
             if (!chunk.isSectionEmpty(i)) {
                 mask |= 1 << i;
                 count++;
             }
         }
+
         ByteBuf data = Unpooled.buffer(16 * 16 * 16 * 5 * count);
         data.writeInt(chunk.getX());
         data.writeInt(chunk.getZ());
@@ -212,6 +214,7 @@ public class ChunkManager implements Runnable {
                 }
             }
         }
+
         try {
             GZIPOutputStream gzip = new GZIPOutputStream(new ByteBufOutputStream(out));
             gzip.write(data.array());
