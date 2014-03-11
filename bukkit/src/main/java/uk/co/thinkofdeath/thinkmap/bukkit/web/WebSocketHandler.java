@@ -1,6 +1,7 @@
 package uk.co.thinkofdeath.thinkmap.bukkit.web;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.*;
@@ -12,11 +13,9 @@ import java.util.logging.Logger;
 
 @RequiredArgsConstructor
 public class WebSocketHandler extends SimpleChannelInboundHandler<BinaryWebSocketFrame> {
-
     private final static Logger logger = Logger.getLogger(WebSocketHandler.class.getName());
 
     private final ThinkMapPlugin plugin;
-    private final int id;
 
     @Override
     protected void channelRead0(final ChannelHandlerContext ctx, BinaryWebSocketFrame msg) throws Exception {
@@ -26,15 +25,35 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<BinaryWebSocke
                 plugin.getServer().getScheduler().runTask(plugin, new Runnable() {
                     @Override
                     public void run() {
-                        Location spawn = plugin.getTargetWorld().getSpawnLocation();
-                        ctx.writeAndFlush(new BinaryWebSocketFrame(
-                                Packets.writeSpawnPosition(spawn.getBlockX(), spawn.getBlockY(), spawn.getBlockZ())
-                        ));
-                        ctx.writeAndFlush(new BinaryWebSocketFrame(
-                                Packets.writeTimeUpdate((int) plugin.getTargetWorld().getTime())
-                        ));
+                        final Location spawn = plugin.getTargetWorld().getSpawnLocation();
+
+                        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, new Runnable() {
+                            @Override
+                            public void run() {
+                                ctx.writeAndFlush(new BinaryWebSocketFrame(
+                                        Packets.writeSpawnPosition(spawn.getBlockX(), spawn.getBlockY(), spawn.getBlockZ())
+                                ));
+
+                                ctx.writeAndFlush(new BinaryWebSocketFrame(
+                                        Packets.writeTimeUpdate((int) plugin.getTargetWorld().getTime())
+                                ));
+                            }
+                        });
                     }
                 });
+
+                break;
+            case 1: // Get new Chunk over Websocket
+                int x = data.readInt();
+                int z = data.readInt();
+
+                ByteBuf out = Unpooled.buffer();
+                plugin.getChunkManager(plugin.getTargetWorld()).getChunkBytes(x, z, out);
+
+                ctx.writeAndFlush(new BinaryWebSocketFrame(
+                        Packets.writeChunkBytes(x, z, out.array())
+                ));
+
                 break;
         }
     }

@@ -14,7 +14,9 @@ public class Events implements Listener {
 
     @EventHandler
     public void onWorldLoad(WorldLoadEvent event) {
-        if (plugin.getTargetWorld() == null) plugin.setTargetWorld(event.getWorld());
+        if (plugin.getTargetWorld() == null) {
+            plugin.setTargetWorld(event.getWorld());
+        }
     }
 
     @EventHandler
